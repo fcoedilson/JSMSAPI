@@ -17,8 +17,11 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
 import org.sms.jfreesms.SMS;
 
 /**
@@ -31,7 +34,8 @@ public class Way2SMS implements SMS {
     String jid = "";
 
     public Way2SMS() {
-        smsClient = new DefaultHttpClient();
+        ClientConnectionManager manager = new ThreadSafeClientConnManager();
+        smsClient = new DefaultHttpClient(manager);
     }
 
     @Override
@@ -87,6 +91,7 @@ public class Way2SMS implements SMS {
 
     @Override
     public void send(String mobileNo, String msg) {
+        
         smsClient.getParams().setParameter("Host", "site4.way2sms.com");
         smsClient.getParams().setParameter("Connection", "keep-alive");
         smsClient.getParams().setParameter("Cache-Control", "max-age=0");
@@ -114,9 +119,23 @@ public class Way2SMS implements SMS {
         }
         try {
             // Execute HTTP Post Request
-            smsClient.execute(post);
+            HttpResponse response = smsClient.execute(post);
+            System.out.println(response);
+            if (response.getEntity() != null) {
+                try {
+                    response.getEntity().consumeContent();
+                    //EntityUtils.consume(response.getEntity());
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
+            try {
+                Thread.sleep(10000);
+            } catch (InterruptedException ex) {
+                ex.printStackTrace();
+            }
         } catch (IOException ex) {
             ex.printStackTrace();
-        } 
+        }
     }
 }
