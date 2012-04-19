@@ -4,14 +4,13 @@
  */
 package org.sms.jfreesms;
 
-import org.sms.jfreesms.webdriver.JWebDriver;
-
 /**
  *
  * @author anantha
  */
-public interface SMSLogin {
+public interface SMS {
     
-    public JWebDriver getjWebDriver();  
+    
     void login(String userName,String password);
+    public void send(String mobileNo,String msg);
 }
