@@ -4,6 +4,8 @@
  */
 package org.sms.jfreesms;
 
+import org.sms.jfreesms.exception.NotAuthenticatedException;
+
 /**
  *
  * @author anantha
@@ -11,6 +13,7 @@ package org.sms.jfreesms;
 public interface SMS {
     
     
-    void login(String userName,String password);
-    public void send(String mobileNo,String msg);
+    boolean login(String userName,String password);
+    boolean isAuthenticated();
+    public void send(String mobileNo,String msg)throws NotAuthenticatedException;
 }

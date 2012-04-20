@@ -23,6 +23,7 @@ import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.sms.jfreesms.SMS;
+import org.sms.jfreesms.exception.NotAuthenticatedException;
 
 /**
  *
@@ -30,16 +31,21 @@ import org.sms.jfreesms.SMS;
  */
 public class Way2SMS implements SMS {
 
-    HttpClient smsClient = null;
-    String jid = "";
+    private HttpClient smsClient = null;
+    private String jid = "";
 
+    private boolean authenticated = false;
+    
     public Way2SMS() {
         ClientConnectionManager manager = new ThreadSafeClientConnManager();
         smsClient = new DefaultHttpClient(manager);
     }
 
     @Override
-    public void login(String userName, String password) {
+    public boolean login(String userName, String password) {
+        
+        authenticated = true;
+        
         smsClient.getParams().setParameter("Host", "site4.way2sms.com");
         smsClient.getParams().setParameter("Connection", "keep-alive");
         smsClient.getParams().setParameter("Cache-Control", "max-age=0");
@@ -68,6 +74,7 @@ public class Way2SMS implements SMS {
         HttpResponse response = null;
         try {
             response = smsClient.execute(post);
+            System.out.println(response);
         } catch (IOException ex) {
             Logger.getLogger(Way2SMS.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -76,6 +83,14 @@ public class Way2SMS implements SMS {
             if (header.getName().equalsIgnoreCase("Set-Cookie")) {
                 String value = header.getValue();
                 jid = value.substring(value.indexOf("=") + 1, value.indexOf(";"));
+                //System.out.println(jid);
+            }
+            if (header.getName().equalsIgnoreCase("Location")) {
+                String value = header.getValue();
+                if(value.endsWith("id="))
+                {
+                    authenticated = false;
+                }
                 //System.out.println(jid);
             }
         }
@@ -87,10 +102,16 @@ public class Way2SMS implements SMS {
                 ex.printStackTrace();
             }
         }
+        return authenticated;
     }
 
     @Override
-    public void send(String mobileNo, String msg) {
+    public void send(String mobileNo, String msg)throws NotAuthenticatedException {
+        
+        if(isAuthenticated() == false)
+        {
+            throw new NotAuthenticatedException("You are not Authenticated.");
+        }
         
         smsClient.getParams().setParameter("Host", "site4.way2sms.com");
         smsClient.getParams().setParameter("Connection", "keep-alive");
@@ -138,4 +159,11 @@ public class Way2SMS implements SMS {
             ex.printStackTrace();
         }
     }
+
+    @Override
+    public boolean isAuthenticated() {
+        return authenticated;
+    }
+    
+    
 }
