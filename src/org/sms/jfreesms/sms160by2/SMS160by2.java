@@ -35,6 +35,8 @@ public class SMS160by2 implements SMS{
 
     private boolean authenticated = false;
     
+    private boolean debug = false;
+    
     public SMS160by2() {
         ClientConnectionManager manager = new ThreadSafeClientConnManager();
         smsClient = new DefaultHttpClient(manager);
@@ -73,9 +75,9 @@ public class SMS160by2 implements SMS{
         HttpResponse response = null;
         try {
             response = smsClient.execute(post);
-            System.out.println(response);
+            //System.out.println(response);
         } catch (IOException ex) {
-            Logger.getLogger(Way2SMS.class.getName()).log(Level.SEVERE, null, ex);
+            ex.printStackTrace();
         }
 
         for (Header header : response.getAllHeaders()) {
@@ -84,7 +86,7 @@ public class SMS160by2 implements SMS{
                 if(value.startsWith("JSESSIONID"))
                 {
                     jid = value.substring(value.indexOf("=") + 1, value.indexOf(";"));
-                    System.out.println(jid);
+                    //System.out.println(jid);
                 }
                 
             }
@@ -105,6 +107,19 @@ public class SMS160by2 implements SMS{
                 ex.printStackTrace();
             }
         }
+        
+        if(debug == true)
+        {
+            if(authenticated == true)
+            {
+                System.out.println("Logged in successfully.");
+            }
+            else
+            {
+                System.out.println("Failed to login. Please try again");
+            }
+        }
+        
         return authenticated;
     }
 
@@ -153,7 +168,7 @@ public class SMS160by2 implements SMS{
         try {
             // Execute HTTP Post Request
             HttpResponse response = smsClient.execute(post);
-            System.out.println(response);
+            //System.out.println(response);
             if (response.getEntity() != null) {
                 try {
                     response.getEntity().consumeContent();
@@ -170,6 +185,16 @@ public class SMS160by2 implements SMS{
         } catch (IOException ex) {
             ex.printStackTrace();
         }
+        
+        if(debug == true)
+        {
+            System.out.println("Message sent Successfully.");
+        }
+    }
+
+    @Override
+    public void setDebug(boolean debug) {
+        this.debug = debug;
     }
     
 }

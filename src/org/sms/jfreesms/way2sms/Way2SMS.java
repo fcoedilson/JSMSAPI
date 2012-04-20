@@ -34,6 +34,8 @@ public class Way2SMS implements SMS {
 
     private boolean authenticated = false;
     
+    private boolean debug = false;
+    
     public Way2SMS() {
         ClientConnectionManager manager = new ThreadSafeClientConnManager();
         smsClient = new DefaultHttpClient(manager);
@@ -72,9 +74,9 @@ public class Way2SMS implements SMS {
         HttpResponse response = null;
         try {
             response = smsClient.execute(post);
-            System.out.println(response);
+            //System.out.println(response);
         } catch (IOException ex) {
-            Logger.getLogger(Way2SMS.class.getName()).log(Level.SEVERE, null, ex);
+            ex.printStackTrace();
         }
 
         for (Header header : response.getAllHeaders()) {
@@ -98,6 +100,18 @@ public class Way2SMS implements SMS {
                 response.getEntity().consumeContent();
             } catch (IOException ex) {
                 ex.printStackTrace();
+            }
+        }
+        
+        if(debug == true)
+        {
+            if(authenticated == true)
+            {
+                System.out.println("Logged in successfully.");
+            }
+            else
+            {
+                System.out.println("Failed to login. Please try again");
             }
         }
         return authenticated;
@@ -139,7 +153,7 @@ public class Way2SMS implements SMS {
         try {
             // Execute HTTP Post Request
             HttpResponse response = smsClient.execute(post);
-            System.out.println(response);
+            //System.out.println(response);
             if (response.getEntity() != null) {
                 try {
                     response.getEntity().consumeContent();
@@ -156,11 +170,21 @@ public class Way2SMS implements SMS {
         } catch (IOException ex) {
             ex.printStackTrace();
         }
+        
+        if(debug == true)
+        {
+            System.out.println("Message sent Successfully.");
+        }
     }
 
     @Override
     public boolean isAuthenticated() {
         return authenticated;
+    }
+
+    @Override
+    public void setDebug(boolean debug) {
+        this.debug = debug;
     }
     
     
