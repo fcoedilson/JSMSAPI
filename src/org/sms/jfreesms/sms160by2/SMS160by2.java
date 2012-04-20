@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.sms.jfreesms.way2sms;
+package org.sms.jfreesms.sms160by2;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -22,46 +22,47 @@ import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.message.BasicNameValuePair;
 import org.sms.jfreesms.SMS;
 import org.sms.jfreesms.exception.NotAuthenticatedException;
+import org.sms.jfreesms.way2sms.Way2SMS;
 
 /**
  *
  * @author anantha
  */
-public class Way2SMS implements SMS {
+public class SMS160by2 implements SMS{
 
     private HttpClient smsClient = null;
     private String jid = "";
 
     private boolean authenticated = false;
     
-    public Way2SMS() {
+    public SMS160by2() {
         ClientConnectionManager manager = new ThreadSafeClientConnManager();
         smsClient = new DefaultHttpClient(manager);
     }
-
+    
     @Override
     public boolean login(String userName, String password) {
-        
         authenticated = true;
         
-        smsClient.getParams().setParameter("Host", "site4.way2sms.com");
+        smsClient.getParams().setParameter("Host", "www.160by2.com");
         smsClient.getParams().setParameter("Connection", "keep-alive");
         smsClient.getParams().setParameter("Cache-Control", "max-age=0");
-        smsClient.getParams().setParameter("Origin", "http://site4.way2sms.com");
+        smsClient.getParams().setParameter("Origin", "http://www.160by2.com");
         smsClient.getParams().setParameter("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.162 Safari/535.19");
         smsClient.getParams().setParameter("Content-Type", "application/x-www-form-urlencoded");
         smsClient.getParams().setParameter("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
         smsClient.getParams().setParameter("Accept-Encoding", "gzip,deflate,sdch");
         smsClient.getParams().setParameter("Accept-Language", "en-US,en;q=0.8");
         smsClient.getParams().setParameter("Accept-Charset", "ISO-8859-1,utf-8;q=0.7,*;q=0.3");
-        smsClient.getParams().setParameter("Cookie", "__gads=ID=c9b227532a00044e:T=1334849437:S=ALNI_MaWzQCpmJ7x1Bv36O4X6aln2uyyOw; JSESSIONID=A03~EAC1C01D2271FF74DBF7FC0BAF236370.w803");
+        smsClient.getParams().setParameter("Cookie", "__gads=ID=0523aeb8dd4d2602:T=1334902996:S=ALNI_MY3yF_P4okrBNqEF9911u0YPwa6yw");
 
-        HttpPost post = new HttpPost("http://site4.way2sms.com/Login1.action");
+        HttpPost post = new HttpPost("http://www.160by2.com/re-login");
 
         // Add your data
-        List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
+        List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
         nameValuePairs.add(new BasicNameValuePair("username", userName));
         nameValuePairs.add(new BasicNameValuePair("password", password));
+        nameValuePairs.add(new BasicNameValuePair("button", "Login"));
         try {
             post.setEntity(new UrlEncodedFormEntity(nameValuePairs));
         } catch (UnsupportedEncodingException ex) {
@@ -80,16 +81,20 @@ public class Way2SMS implements SMS {
         for (Header header : response.getAllHeaders()) {
             if (header.getName().equalsIgnoreCase("Set-Cookie")) {
                 String value = header.getValue();
-                jid = value.substring(value.indexOf("=") + 1, value.indexOf(";"));
-                //System.out.println(jid);
+                if(value.startsWith("JSESSIONID"))
+                {
+                    jid = value.substring(value.indexOf("=") + 1, value.indexOf(";"));
+                    System.out.println(jid);
+                }
+                
             }
             if (header.getName().equalsIgnoreCase("Location")) {
                 String value = header.getValue();
-                if(value.endsWith("id="))
+                if(value.contains("?id=") == false || value.endsWith("id=") == true)
                 {
                     authenticated = false;
                 }
-                //System.out.println(jid);
+                
             }
         }
 
@@ -104,33 +109,42 @@ public class Way2SMS implements SMS {
     }
 
     @Override
-    public void send(String mobileNo, String msg)throws NotAuthenticatedException {
-        
+    public boolean isAuthenticated() {
+        return authenticated;
+    }
+
+    @Override
+    public void send(String mobileNo, String msg) throws NotAuthenticatedException {
         if(isAuthenticated() == false)
         {
             throw new NotAuthenticatedException("You are not Authenticated.");
         }
         
-        smsClient.getParams().setParameter("Host", "site4.way2sms.com");
+        smsClient.getParams().setParameter("Host", "www.160by2.com");
         smsClient.getParams().setParameter("Connection", "keep-alive");
         smsClient.getParams().setParameter("Cache-Control", "max-age=0");
-        smsClient.getParams().setParameter("Origin", "http://site4.way2sms.com");
+        smsClient.getParams().setParameter("Origin", "http://www.160by2.com");
         smsClient.getParams().setParameter("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.162 Safari/535.19");
         smsClient.getParams().setParameter("Content-Type", "application/x-www-form-urlencoded");
         smsClient.getParams().setParameter("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
         smsClient.getParams().setParameter("Accept-Encoding", "gzip,deflate,sdch");
         smsClient.getParams().setParameter("Accept-Language", "en-US,en;q=0.8");
         smsClient.getParams().setParameter("Accept-Charset", "ISO-8859-1,utf-8;q=0.7,*;q=0.3");
-        smsClient.getParams().setParameter("Cookie", "__gads=ID=c9b227532a00044e:T=1334849437:S=ALNI_MaWzQCpmJ7x1Bv36O4X6aln2uyyOw; JSESSIONID=" + jid);
+        smsClient.getParams().setParameter("Cookie", "__gads=ID=0523aeb8dd4d2602:T=1334902996:S=ALNI_MY3yF_P4okrBNqEF9911u0YPwa6yw; JSESSIONID=" + jid+"; noad=0");
 
-        HttpPost post = new HttpPost("http://site4.way2sms.com/quicksms.action");
+        HttpPost post = new HttpPost("http://www.160by2.com/SendSMSAction");
         List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
-        nameValuePairs.add(new BasicNameValuePair("HiddenAction", "instantsms"));
-        nameValuePairs.add(new BasicNameValuePair("catnamedis", "Birthday"));
-        nameValuePairs.add(new BasicNameValuePair("Action", "sf55sa5655sdf5"));
-        nameValuePairs.add(new BasicNameValuePair("chkall", "on"));
-        nameValuePairs.add(new BasicNameValuePair("MobNo", mobileNo));
-        nameValuePairs.add(new BasicNameValuePair("textArea", msg));
+        nameValuePairs.add(new BasicNameValuePair("hid_exists", "no"));
+        nameValuePairs.add(new BasicNameValuePair("action1", "hgfgh5656fgd"));
+        nameValuePairs.add(new BasicNameValuePair("mobile1", mobileNo));
+        nameValuePairs.add(new BasicNameValuePair("msg1", msg));
+        nameValuePairs.add(new BasicNameValuePair("sel_month", "0"));
+        nameValuePairs.add(new BasicNameValuePair("sel_year", "0"));
+        nameValuePairs.add(new BasicNameValuePair("sel_hour", "hh"));
+        nameValuePairs.add(new BasicNameValuePair("sel_minute", "mm"));
+        nameValuePairs.add(new BasicNameValuePair("sel_cat", "0"));
+        
+        
         try {
             post.setEntity(new UrlEncodedFormEntity(nameValuePairs));
         } catch (UnsupportedEncodingException ex) {
@@ -157,11 +171,5 @@ public class Way2SMS implements SMS {
             ex.printStackTrace();
         }
     }
-
-    @Override
-    public boolean isAuthenticated() {
-        return authenticated;
-    }
-    
     
 }
